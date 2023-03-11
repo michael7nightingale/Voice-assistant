@@ -31,6 +31,13 @@ class AssistantApplication(QMainWindow, Observer):
         self.ui.button_exit.clicked.connect(lambda: exit())
         self.ui.button_clear_messages.clicked.connect(self.ui.clear_messages)
 
+    def clear_messages(self):
+        """Убрать все рамки сообщений при запуске"""
+        self.ui.frameMessages1.hide()
+        self.ui.frameMessages2.hide()
+        self.ui.frameMessages3.hide()
+        self.ui.frameMessages4.hide()
+
     def changeSidebarCondition(self):
         """Закрытие и открытие сайдбара"""
         self.sidebarOpened = not self.sidebarOpened

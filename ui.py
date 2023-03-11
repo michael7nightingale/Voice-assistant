@@ -405,15 +405,6 @@ class Ui_MainWindow(object):
         self.toolBox.layout().setSpacing(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        self.clear_messages()
-
-    def clear_messages(self):
-        """Убрать все рамки сообщений при запуске"""
-        self.frameMessages1.hide()
-        self.frameMessages2.hide()
-        self.frameMessages3.hide()
-        self.frameMessages4.hide()
-
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
