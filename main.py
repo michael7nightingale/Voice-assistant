@@ -1,7 +1,7 @@
 import sys
 import time
 from assistant import Assistant
-from assistapp import Ui_MainWindow
+from ui import Ui_MainWindow
 from PyQt6.QtWidgets import QMainWindow, QApplication
 from observer import Observer
 from PyQt6.QtCore import *
@@ -25,9 +25,11 @@ class AssistantApplication(QMainWindow, Observer):
         self._button_checker()
 
     def _button_checker(self):
-        self.ui.sidebarOpen.clicked.connect(self.changeSidebarCondition)
-        self.ui.startButton.clicked.connect(self.changeAssistantCondition)
-        self.ui.exitbutton.clicked.connect(lambda: exit())
+        """Контроль кнопок"""
+        self.ui.button_open_sidebar.clicked.connect(self.changeSidebarCondition)
+        self.ui.button_start.clicked.connect(self.changeAssistantCondition)
+        self.ui.button_exit.clicked.connect(lambda: exit())
+        self.ui.button_clear_messages.clicked.connect(self.ui.clear_messages)
 
     def changeSidebarCondition(self):
         """Закрытие и открытие сайдбара"""
@@ -39,11 +41,10 @@ class AssistantApplication(QMainWindow, Observer):
         self.assist_condition = not self.assist_condition
         if self.assist_condition:
             self.assistThread_instance.start()
-            self.ui.startButton.setText("Stop")
+            # self.ui.button_start.setText("Stop")
         else:
             self.assistThread_instance.terminate()
-            self.ui.startButton.setText("Start")
-
+            # self.ui.button_start.setText("Start")
 
     def update(self, data: list[tuple[str, str]]) -> None:
         """Переопределение метода класса Наблюдатель"""
