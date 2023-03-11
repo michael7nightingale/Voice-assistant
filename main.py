@@ -17,11 +17,13 @@ class AssistantApplication(QMainWindow, Observer):
         self.assist_condition = False
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)   # установка виджетов
+
         self.sidebarConditions = [self.ui.sidebarClosedSize, self.ui.sidebarOpenedSize]
         self.sidebarOpened = False  # состояние сайдбара
         self.assistant = Assistant()
         self.assistant.subscribe(self)
         self.assistThread_instance = AssistantThread(self)
+        self.clear_messages()
         self._button_checker()
 
     def _button_checker(self):
@@ -29,7 +31,7 @@ class AssistantApplication(QMainWindow, Observer):
         self.ui.button_open_sidebar.clicked.connect(self.changeSidebarCondition)
         self.ui.button_start.clicked.connect(self.changeAssistantCondition)
         self.ui.button_exit.clicked.connect(lambda: exit())
-        self.ui.button_clear_messages.clicked.connect(self.ui.clear_messages)
+        self.ui.button_clear_messages.clicked.connect(self.clear_messages)
 
     def clear_messages(self):
         """Убрать все рамки сообщений при запуске"""
@@ -37,6 +39,7 @@ class AssistantApplication(QMainWindow, Observer):
         self.ui.frameMessages2.hide()
         self.ui.frameMessages3.hide()
         self.ui.frameMessages4.hide()
+        self.assistant.phrases.clear()
 
     def changeSidebarCondition(self):
         """Закрытие и открытие сайдбара"""
@@ -50,6 +53,7 @@ class AssistantApplication(QMainWindow, Observer):
             self.assistThread_instance.start()
             # self.ui.button_start.setText("Stop")
         else:
+            self.assistant.source.stream = None
             self.assistThread_instance.terminate()
             # self.ui.button_start.setText("Start")
 

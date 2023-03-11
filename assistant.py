@@ -138,7 +138,6 @@ class Assistant(Subject):
         self.set_data(self.phrases)
         return text
 
-
     # поиск фразы в триггерах - ответ
     def matchText(self, phrase: str):   # распознает команды
         # проходимся по каждой команде из бд
