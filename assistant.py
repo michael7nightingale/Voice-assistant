@@ -24,54 +24,66 @@ class Assistant(Subject):
     MONOCONDITIONAL_DATA = {
         'recognizer': sr.Recognizer(),
         'data': FDM.config_data,
-        'threadAwait_flag': False
+        'threadAwait_flag': False,
+        "ERRORLIMIT": 3,
     }
 
-    def __init__(self):    # элементарный инициализатор класса
+    def __init__(self, mode="commands"):    # элементарный инициализатор класса
         self.__dict__ = self.MONOCONDITIONAL_DATA
         super().__init__()
         self.phrases = []
+        self.reanswer_phrases = 0
         self.source = sr.Microphone(device_index=1)
+        self.mode = mode
+        self.user_num: int
 
     def execute(self):
-        if not FDM.isRegistrated():
+        """Запуск помощника"""
+        if not FDM.is_any_registrated():
+            self.mode = "service"
             self.name, self.age, self.keyword = self.register()
         else:
-            self.name, self.age, self.keyword = FDM.get_user_info()
-        # self.name = 'Михаил'
+            self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
+        self.mode = "commands"
         self.answer(f"Привет, {self.name}", continue_target='commands')
-
 
     def askWhileFalse(self, text_to_reanswer: str, text_to_answer_finally: str, type_: str):
         """Функция для переспрашивания, пока не истинно условие"""
         try:
             try_phrase = self.listen_service(phrase_to_reanswer=text_to_reanswer)
-            print(try_phrase)
             if validDate(type_, try_phrase):
                 self.answer(continue_target='service', response=text_to_answer_finally)
                 return try_phrase
-
             return self.askWhileFalse(type_, text_to_reanswer, text_to_answer_finally)
-
         except RecursionError:
             return "Ошибка регистрации"
 
-
     def speechExceptionCommands(func):
-        """Декоратор прослушивания комманд"""
+        """Декоратор прослушивания команд"""
         def wrapper(self, *args, **kwargs):
             try:
                 return func(self, *args, **kwargs)
             except speech_recognition.UnknownValueError:
                 print('UnknownValueError')
-                self.answer(self.answer(random.choice(self.data['commands']["misunderstand"]['response']),
+                # проверка на превышение времени отклика пользователя
+                self.reanswer_phrases += 1
+                if self.reanswer_phrases >= self.ERRORLIMIT:
+                    # self.send_error()
+                    return
+                else:
+                    self.answer(self.answer(random.choice(self.data['commands']["misunderstand"]['response']),
                                             continue_target="commands"))
             except speech_recognition.WaitTimeoutError:
                 print('WaitTimeoutError')
-                self.answer(random.choice(self.data['commands']['silence']['response']),
+                # проверка на превышение времени отклика пользователя
+                self.reanswer_phrases += 1
+                if self.reanswer_phrases >= self.ERRORLIMIT:
+                    # self.send_error()
+                    return
+                else:
+                    self.answer(random.choice(self.data['commands']['silence']['response']),
                                 continue_target="commands")
         return wrapper
-
 
     def speechExceptionService(func):
         """Декоратор прослушивания сервисных фраз"""
@@ -79,21 +91,19 @@ class Assistant(Subject):
             try:
                 return func(self, *args, **kwargs)
             except speech_recognition.UnknownValueError:
-                print('UnknownValueError')
+                print("serv", 'UnknownValueError')
                 print(self, args, kwargs)
                 self.answer(response=kwargs['phrase_to_reanswer'],
                             continue_target="service")
             except speech_recognition.WaitTimeoutError:
-                print('WaitTimeoutError')
+                print("serv", 'WaitTimeoutError')
                 print(self, args, kwargs)
                 self.answer(response=kwargs['phrase_to_reanswer'],
                             continue_target="service")
         return wrapper
 
-
-
-    # проверка на регистрацию -> регистрация
     def register(self):
+        """Проверка на регистрацию -> регистрация"""
         if not FDM.isRegistrated():
             self.answer(response='Привет, давай познакомимся!', continue_target='service')
             self.answer(response='Как тебя зовут?', continue_target='service')
@@ -108,14 +118,12 @@ class Assistant(Subject):
 
             return FDM.register(try_name, try_age, try_password)
 
-
     @speechExceptionCommands
     def listen_commands(self):   # метод прослушивания команд
-        # continue_target = objective[:]
         # listening
         with self.source as source:
             self.recognizer.adjust_for_ambient_noise(source)
-            audio = self.recognizer.listen(source=source)
+            audio = self.recognizer.listen(source=source, timeout=4)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
 
         # setting user phrase
@@ -124,13 +132,12 @@ class Assistant(Subject):
         # matching with commands data
         return self.matchText(text)
 
-
     @speechExceptionService
     def listen_service(self, phrase_to_reanswer):
         # listening
         with self.source as source:
             self.recognizer.adjust_for_ambient_noise(source)
-            audio = self.recognizer.listen(source=source)
+            audio = self.recognizer.listen(source=source, timeout=4)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
 
         # setting user phrase
@@ -153,7 +160,6 @@ class Assistant(Subject):
                 return self.answer(response, continue_=continue_, continue_target='commands')     # вызов метода ответа с флагом продолжения
         return self.answer("Я вас не понимаю", continue_target='commands')
 
-
     def answer_text(self, response,  continue_target='commands', continue_=True,):
         # print(response.title())
         if continue_:   # если любая команда кроме goodbye
@@ -163,8 +169,6 @@ class Assistant(Subject):
         self.phrases.append(("Assistant: ", response))
         return self.set_data(self.phrases)
 
-
-    # отдельный метод ответа позволяет в будущем посылать ответ в динамик
     def answer(self, response, continue_target='commands', continue_=True,):
         # setting assistant phrase
         self.phrases.append(("Assistant: ", response))
@@ -195,6 +199,7 @@ def validDate(type_: str, phrase, maxQuantityWords: int = 3, maxLength: int = 40
 
 
 def validAge(phrase) -> bool:
+    """Проверка возраста"""
     if phrase.isdigit():
         if 9 <= int(phrase) <= 100:
             return True

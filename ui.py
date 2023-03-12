@@ -12,13 +12,14 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1237, 800)
         MainWindow.setMinimumSize(QtCore.QSize(652, 612))
-        MainWindow.setMaximumSize(QtCore.QSize(1920, 1080))
+        MainWindow.setGeometry(300, 300, 800, 650)
         font = QtGui.QFont()
         font.setFamily("Terminal")
         font.setPointSize(14)
         MainWindow.setFont(font)
+        MainWindow.setWindowTitle("Голосовой помощник")
+        MainWindow.setWindowIcon(QtGui.QIcon("icons/logo/microphone.png"))
         MainWindow.setAutoFillBackground(False)
         MainWindow.setStyleSheet("background-color: rgb(255, 255, 255);")
         MainWindow.setIconSize(QtCore.QSize(34, 34))
@@ -217,6 +218,7 @@ class Ui_MainWindow(object):
         self.messages.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.messages.setObjectName("messages")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.messages)
+        self.verticalLayout_3.setSpacing(0)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.frameMessages4 = QtWidgets.QFrame(self.messages)
         self.frameMessages4.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
@@ -405,7 +407,6 @@ class Ui_MainWindow(object):
         self.toolBox.layout().setSpacing(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
@@ -418,14 +419,14 @@ class Ui_MainWindow(object):
         self.toolBox.setItemText(self.toolBox.indexOf(self.Settings), _translate("MainWindow", "Звук"))
         self.button_exit.setText(_translate("MainWindow", "Exit"))
         self.label_title.setText(_translate("MainWindow", "Диалог"))
-        self.fromwho4.setText(_translate("MainWindow", "ME:"))
-        self.message4.setText(_translate("MainWindow", "Привет"))
-        self.fromwho3.setText(_translate("MainWindow", "ME:"))
-        self.message3.setText(_translate("MainWindow", "Привет"))
-        self.fromwho2.setText(_translate("MainWindow", "ME:"))
-        self.message2.setText(_translate("MainWindow", "Привет"))
-        self.fromwho1.setText(_translate("MainWindow", "ME:"))
-        self.message1.setText(_translate("MainWindow", "Привет"))
+        # self.fromwho4.setText(_translate("MainWindow", "ME:"))
+        # self.message4.setText(_translate("MainWindow", "Привет"))
+        # self.fromwho3.setText(_translate("MainWindow", "ME:"))
+        # self.message3.setText(_translate("MainWindow", "Привет"))
+        # self.fromwho2.setText(_translate("MainWindow", "ME:"))
+        # self.message2.setText(_translate("MainWindow", "Привет"))
+        # self.fromwho1.setText(_translate("MainWindow", "ME:"))
+        # self.message1.setText(_translate("MainWindow", "Привет"))
         self.action.setText(_translate("MainWindow", "Окно"))
         self.action_3.setText(_translate("MainWindow", "Конфигурация ассистента"))
 
@@ -437,4 +438,4 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    sys.exit(app.exec())
+    app.exec()

@@ -3,6 +3,8 @@
 Грубо говоря, приложение должно при всяком изменении данных фраз ассистента
 менять список отображаемых фраз. (подписано на рассылку)
 """
+
+
 class Subject(object):
     """Класс-наблюдаемый объект"""
     def __init__(self):
@@ -32,17 +34,20 @@ class Subject(object):
         """Метод получения данных"""
         return self._data
 
+    def send_error(self):
+        for observer in self._observers:
+            observer.button_clicked()
+
     def notify(self, data):
         """Метод рассылки данных наблюдателям"""
         for observer in self._observers:
             observer.update(data)
 
 
-class Observer:     # базовый класс Наблюдателя
-    def update(self, date_to_send):   # абстрактный метод
+class Observer:    # базовый класс Наблюдателя
+    def update(self, data_to_send):   # абстрактный метод
         raise NotImplementedError("Метод update() не определен в классе наблюдателя")
 
+    def button_clicked(self):
+        raise NotImplementedError("Метод send_error_message() не определен в классе наблюдателя")
 
-# class ObserverPhrasesList(Observer):    # класс наблюдателя за обновлением произнесенных фраз ассистента
-#     def update(self, data_to_send):
-#         return data_to_send
