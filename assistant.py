@@ -3,14 +3,18 @@
 Выступает в роли независимого-класса.
 Реализован паттерн Моносостояние
 """
+import sys
+
 import speech_recognition
 import speech_recognition as sr
 import os
 from gtts import gTTS
 import random
 import file_data_manager as FDM
+import pyaudio
 from playsound import playsound     # для воспроизведения звука
 from observer import Subject        # импорт наблюдаемого класса
+from pyau import play
 
 
 class Assistant(Subject):
@@ -174,9 +178,10 @@ class Assistant(Subject):
         self.phrases.append(("Assistant: ", response))
         self.set_data(self.phrases)
         # audio-answer
-        audio_text = gTTS(text=response, lang='ru', slow=False)
+        audio_text = gTTS(text=response, lang='ru')
         audio_text.save('response.mp3')
         playsound('response.mp3')
+        # play()
         os.remove('response.mp3')
         # решение о продолжении прослушивания команд
         if continue_:

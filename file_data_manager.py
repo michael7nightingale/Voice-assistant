@@ -16,7 +16,7 @@ commands_random = tuple(i for i in config_data['commands']
                         if config_data['commands'][i]['response_type'] == 'random')
 functions = (parser.parse_films, parser.parse_games)
 commands_functions_dict = dict(zip(commands_functions, functions))
-amount_of_user = 0
+amount_of_users = 0
 
 
 def is_any_registrated() -> bool:
@@ -53,8 +53,8 @@ def get_users_info() -> list:
 
 
 def save_information(name, age, keyword):
-    global amount_of_user
-    amount_of_user += 1
+    global amount_of_users
+    amount_of_users += 1
     with open('DATA/users.txt', 'a+', encoding="utf-8") as file:
         file.write(f"{name} {age} {keyword}\n")
 

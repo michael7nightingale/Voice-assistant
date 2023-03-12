@@ -1,5 +1,6 @@
 import sys
 import time
+import os
 from assistant import Assistant
 from ui import Ui_MainWindow
 from reg_ui import Ui_Reg_Window
@@ -18,24 +19,34 @@ class AssistantApplication(QMainWindow, Observer):
 
     def __init__(self, parent=None):
         super(AssistantApplication, self).__init__(parent)  # инициализатор QMainWindow
-        self.assist_condition = False
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)   # установка виджетов
-        self.check_registration()
         self.sidebarConditions = [self.ui.sidebarClosedSize, self.ui.sidebarOpenedSize]
         self.sidebarOpened = False  # состояние сайдбара
+        # Ассистент
+        self.assist_condition = False
         self.assistant = Assistant()
         self.assistant.subscribe(self)
+        # Потоки
         self.assistThread_instance = AssistantThread(self)
         self.popupThread_instance = PopupThread(self)
+        # Окна
+        self.regwindow = RegWindow(self)
+        self.dlg = QMainWindow(self)
+        self.login_window = LoginWindow(self)
+        # Log in / Log up
+        self.check_registration()
+        # Первоначальная очистка окон
         self.clear_messages()
         self._button_checker()
 
     def check_registration(self):
+        """Если есть зарегистрированные пользователи, открываем окно входа,
+        если нет, то окно регистрации"""
         if FDM.is_any_registrated():
-            self.log_in()
+            self.show_login_window()
         else:
-            self.new_user()
+            self.show_regwindow()
 
     def _button_checker(self):
         """Контроль кнопок"""
@@ -43,7 +54,7 @@ class AssistantApplication(QMainWindow, Observer):
         self.ui.button_start.clicked.connect(self.changeAssistantCondition)
         self.ui.button_exit.clicked.connect(lambda: exit())
         self.ui.my_account.clicked.connect(self.send_user_info)
-        self.ui.change_account.clicked.connect(self.log_in)
+        self.ui.change_account.clicked.connect(self.show_login_window)
         self.ui.button_clear_messages.clicked.connect(self.clear_messages)
         self.ui.button_commands.clicked.connect(self.show_regwindow)
 
@@ -68,6 +79,8 @@ class AssistantApplication(QMainWindow, Observer):
             self.assistThread_instance.start()
         else:
             self.assistant.source.stream = None
+            if os.path.exists("response.mp3"):
+                os.remove("response.mp3")
             self.assistThread_instance.terminate()
 
     def update(self, data: list[tuple[str, str]]) -> None:      # !!!!!!!ВЫНЕСТИ В ОТДTЛЬНЫЙ СЕТАП И КЛАСССС!!!!!!!!!!
@@ -81,7 +94,6 @@ class AssistantApplication(QMainWindow, Observer):
         time.sleep(0.3)
 
     def send_user_info(self):
-        self.dlg = QMainWindow(self)
         self.dlg.setMinimumSize(QSize(300, 200))
         self.dlg.resize(0, 0)
         self.dlg.setWindowTitle("Пользователь")
@@ -102,16 +114,19 @@ class AssistantApplication(QMainWindow, Observer):
         self.dlg.show()
 
     def show_regwindow(self):
-        self.regwindow = RegWindow(self)
         self.regwindow.show()
 
     def new_user(self, name, age, keyword):
         FDM.save_information(name, age, keyword)
-        return FDM.get_user_info(FDM.amount_of_user)
+        self.assistThread_instance.terminate()
+        self.assistant.user_num = FDM.amount_of_users
 
-    def log_in(self):
-        self.login_window = LoginWindow(self)
+    def show_login_window(self):
         self.login_window.show()
+
+    def login(self, user_num):
+        self.assistThread_instance.terminate()
+        self.assistant.user_num = user_num
 
 
 class AssistantThread(QThread):
@@ -148,12 +163,12 @@ class RegWindow(QMainWindow):
         self.ui.pushButton.clicked.connect(self.send_input_data)
 
     def send_input_data(self) -> None:
-        name = self.ui.lineEdit_3.text()
+        name = self.ui.lineEdit.text()
         age = self.ui.lineEdit_2.text()
-        keyword = self.ui.lineEdit.text()
+        keyword = self.ui.lineEdit_3.text()
         if self.validDate(phrase=name) and self.validAge(phrase=age) and self.validDate(phrase=keyword):
-            self.destroy()
             self.parent.new_user(name, age, keyword)
+            self.close()
 
     def validDate(self, phrase: str, type_: type = str,  maxQuantityWords: int = 3, maxLength: int = 40):
         """Проверка слов"""
@@ -177,14 +192,15 @@ class LoginWindow(QMainWindow):
         self.parent = parent
         self.ui = Ui_LoginWindow()
         self.ui.setupUi(self)
-        for i, user in enumerate(FDM.get_users_info()):
-            self.ui.comboBox.addItem(f"{i + 1} - {user.split()[0]}")
+        if FDM.is_any_registrated():
+            for i, user in enumerate(FDM.get_users_info()):
+                self.ui.comboBox.addItem(f"{i + 1} - {user.split()[0]}")
         self.ui.pushButton.clicked.connect(self.login)
 
     def login(self):
         user_num = int(self.ui.comboBox.currentText().split(" - ")[0].strip())
-        self.parent.assistant.user_num = user_num
-        self.destroy()
+        self.parent.login(user_num)
+        self.close()
 
 
 if __name__ == '__main__':
