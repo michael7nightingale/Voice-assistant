@@ -36,13 +36,13 @@ class Assistant(Subject, FDM.DataMixin):
         self.__dict__ = self.MONOCONDITIONAL_DATA
         super().__init__()
         self.phrases = []
-        self.reanswer_phrases = 0
         self.source = sr.Microphone(device_index=1)
         self.mode = mode
         self.user_num: int
 
     def execute(self):
         """Запуск помощника"""
+
         if not FDM.is_any_registrated():
             self.mode = "service"
             self.name, self.age, self.keyword = self.register()
