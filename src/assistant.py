@@ -14,7 +14,7 @@ import file_data_manager as FDM
 import pyaudio
 from playsound import playsound     # для воспроизведения звука
 from observer import Subject        # импорт наблюдаемого класса
-from pyau import play
+#from pyau import play
 
 
 class Assistant(Subject, FDM.DataMixin):
