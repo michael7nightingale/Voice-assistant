@@ -8,7 +8,7 @@ class Ui_Reg_Window(object):
         Reg_Window.setMaximumSize(QtCore.QSize(585, 462))
         Reg_Window.setStyleSheet("background-color: rgb(0, 244, 179);")
         Reg_Window.setWindowTitle("Новый пользователь")
-        Reg_Window.setWindowIcon(QtGui.QIcon("icons/logo/chart-user.png"))
+        Reg_Window.setWindowIcon(QtGui.QIcon("../../icons/logo/chart-user.png"))
         self.centralwidget = QtWidgets.QWidget(Reg_Window)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)

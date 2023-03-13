@@ -1,10 +1,10 @@
 import sys
 import time
 import os
-from assistant import Assistant
-from ui import Ui_MainWindow
-from reg_ui import Ui_Reg_Window
-from log_in_ui import Ui_LoginWindow
+from src.assistant import Assistant
+from src.UI.ui import Ui_MainWindow
+from src.UI.reg_ui import Ui_Reg_Window
+from src.UI.log_in_ui import Ui_LoginWindow
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 import file_data_manager as FDM
@@ -12,7 +12,7 @@ from observer import Observer
 from PyQt6.QtCore import *
 
 
-class AssistantApplication(QMainWindow, Observer):
+class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
     """Класс приложения. Отвечает за логику отображения окна, изменения состояния
     виджетов, за создание и выключение потоков и запуск голосового помощника"""
     MAX_PHRASES_QUANTITY = 4    # максимальное количество отображаемых фраз
@@ -118,8 +118,8 @@ class AssistantApplication(QMainWindow, Observer):
 
     def new_user(self, name, age, keyword):
         FDM.save_information(name, age, keyword)
-        self.assistThread_instance.terminate()
-        self.assistant.user_num = FDM.amount_of_users
+        print(FDM.get_users_info())
+        self.login(FDM.amount_of_users)
 
     def show_login_window(self):
         self.login_window.show()

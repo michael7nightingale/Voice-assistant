@@ -9,14 +9,14 @@ class Subject(object):
     """Класс-наблюдаемый объект"""
     def __init__(self):
         self._data = None
-        self._observers = set()
+        self._observers = list()
 
     def subscribe(self, observer):
         """Метод добавления наблюдателя(подписчика)"""
         if not isinstance(observer, Observer):
             raise TypeError("наблюдатель не унаследован от класса Observer")
         else:
-            self._observers.add(observer)
+            self._observers.append(observer)
 
     def desubscribe(self, observer):
         """Метод удаления наблюдателя(подписчика)"""

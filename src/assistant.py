@@ -17,7 +17,7 @@ from observer import Subject        # импорт наблюдаемого кл
 from pyau import play
 
 
-class Assistant(Subject):
+class Assistant(Subject, FDM.DataMixin):
     """Класс голосового помощника"""
     def __new__(cls, *args, **kwargs):  # элементарный конструктор класса
         if not hasattr(cls, 'instance'):    # Синглтон
@@ -173,16 +173,17 @@ class Assistant(Subject):
         self.phrases.append(("Assistant: ", response))
         return self.set_data(self.phrases)
 
+    @FDM.safe_delete_response
     def answer(self, response, continue_target='commands', continue_=True,):
         # setting assistant phrase
         self.phrases.append(("Assistant: ", response))
         self.set_data(self.phrases)
         # audio-answer
         audio_text = gTTS(text=response, lang='ru')
-        audio_text.save('response.mp3')
-        playsound('response.mp3')
+        audio_text.save(self.DATA_DIR + self.RESPONSE_FILE_NAME)
+        playsound(self.DATA_DIR + self.RESPONSE_FILE_NAME)
+        FDM.delete_response()
         # play()
-        os.remove('response.mp3')
         # решение о продолжении прослушивания команд
         if continue_:
             if continue_target == 'commands':

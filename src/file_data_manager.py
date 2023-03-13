@@ -1,13 +1,21 @@
 import parser
 import json
 import os
+from dataclasses import dataclass
 
 
+@dataclass
+class DataMixin:
+    DATA_DIR: str = os.getcwd().replace('src', '') + r"\DATA\\"
+    RESPONSE_FORMAT: str = ".mp3"
+    RESPONSE_FILE_NAME: str = "response" + RESPONSE_FORMAT
 
-with open("DATA/config.json", encoding='utf-8') as file:
+
+data = DataMixin()
+
+
+with open(f"{data.DATA_DIR}config.json", encoding='utf-8') as file:
     config_data = json.load(file)
-
-# print(config_data)
 
 
 commands_functions = tuple(i for i in config_data['commands']
@@ -20,7 +28,7 @@ amount_of_users = 0
 
 
 def is_any_registrated() -> bool:
-    if os.path.exists("DATA/users.txt"):
+    if os.path.exists(f"{data.DATA_DIR}users.txt"):
         return True
     else:
         return False
@@ -39,7 +47,7 @@ def is_any_registrated() -> bool:
 
 
 def get_user_info(number: int):
-    with open(f'DATA/users.txt', 'r', encoding='utf-8') as file:
+    with open(f'{data.DATA_DIR}users.txt', 'r', encoding='utf-8') as file:
         users_info = file.readlines()
         user_required_indo = users_info[number - 1].strip().split()
         return user_required_indo
@@ -47,7 +55,7 @@ def get_user_info(number: int):
 
 
 def get_users_info() -> list:
-    with open('DATA/users.txt', "r", encoding="utf-8") as file:
+    with open(f'{data.DATA_DIR}users.txt', "r", encoding="utf-8") as file:
         users_info = [i for i in file]
     return users_info
 
@@ -55,9 +63,21 @@ def get_users_info() -> list:
 def save_information(name, age, keyword):
     global amount_of_users
     amount_of_users += 1
-    with open('DATA/users.txt', 'a+', encoding="utf-8") as file:
+    with open(f'{data.DATA_DIR}users.txt', 'a+', encoding="utf-8") as file:
         file.write(f"{name} {age} {keyword}\n")
 
 
+def safe_delete_response(func):
+    def wrapper(*args, **kwargs):
+        if os.path.exists(data.DATA_DIR + data.RESPONSE_FILE_NAME):
+            os.remove(data.DATA_DIR + data.RESPONSE_FILE_NAME)
+        return func(*args, **kwargs)
+    delete_response()
+    return wrapper
+
+
+def delete_response():
+    if os.path.exists(data.DATA_DIR + data.RESPONSE_FILE_NAME):
+        os.remove(data.DATA_DIR + data.RESPONSE_FILE_NAME)
 
 
