@@ -11,8 +11,9 @@ class Subject(object):
         self._data = None
         self._observers = list()
 
-    def subscribe(self, observer):
+    def subscribe(self, observer: object):
         """Метод добавления наблюдателя(подписчика)"""
+        print(isinstance(observer, Observer))
         if not isinstance(observer, Observer):
             raise TypeError("наблюдатель не унаследован от класса Observer")
         else:

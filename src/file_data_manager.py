@@ -1,4 +1,4 @@
-import parser
+from src import parser
 import json
 import os
 from dataclasses import dataclass
