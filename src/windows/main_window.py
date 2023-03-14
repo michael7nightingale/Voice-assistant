@@ -12,6 +12,7 @@ from src.observer import Observer
 from PyQt6.QtCore import *
 
 
+
 class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
     """Класс приложения. Отвечает за логику отображения окна, изменения состояния
     виджетов, за создание и выключение потоков и запуск голосового помощника"""

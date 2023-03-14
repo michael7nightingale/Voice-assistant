@@ -3,18 +3,15 @@
 Выступает в роли независимого-класса.
 Реализован паттерн Моносостояние
 """
-import sys
-
 import speech_recognition
 import speech_recognition as sr
 import os
 from gtts import gTTS
 import random
-import file_data_manager as FDM
+import src.file_data_manager as FDM
 import pyaudio
 from playsound import playsound     # для воспроизведения звука
-from observer import Subject        # импорт наблюдаемого класса
-from pyau import play
+from src.observer import Subject        # импорт наблюдаемого класса
 
 
 class Assistant(Subject, FDM.DataMixin):
@@ -42,7 +39,7 @@ class Assistant(Subject, FDM.DataMixin):
 
     def execute(self):
         """Запуск помощника"""
-
+        self.reanswer_phrases = 0
         if not FDM.is_any_registrated():
             self.mode = "service"
             self.name, self.age, self.keyword = self.register()
