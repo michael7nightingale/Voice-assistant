@@ -10,10 +10,10 @@ import speech_recognition as sr
 import os
 from gtts import gTTS
 import random
-import src.file_data_manager as FDM
+import file_data_manager as FDM
 import pyaudio
 from playsound import playsound     # для воспроизведения звука
-from src.observer import Subject        # импорт наблюдаемого класса
+from observer import Subject        # импорт наблюдаемого класса
 from pyau import play
 
 
@@ -30,7 +30,6 @@ class Assistant(Subject, FDM.DataMixin):
         'data': FDM.config_data,
         'threadAwait_flag': False,
         "ERRORLIMIT": 3,
-        "modes": ['commands', 'service', 'math', 'search', 'stats']
     }
 
     def __init__(self, mode="commands"):    # элементарный инициализатор класса
@@ -40,14 +39,13 @@ class Assistant(Subject, FDM.DataMixin):
         self.source = sr.Microphone(device_index=1)
         self.mode = mode
         self.user_num: int
-        self.reanswer_phrases: int
 
     def execute(self):
         """Запуск помощника"""
-        self.reanswer_phrases = 0
+
         if not FDM.is_any_registrated():
             self.mode = "service"
-            self.name, self.age, self.keyword = self.register(self.user_num)
+            self.name, self.age, self.keyword = self.register()
         else:
             self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
         self.mode = "commands"
@@ -110,7 +108,7 @@ class Assistant(Subject, FDM.DataMixin):
 
     def register(self):
         """Проверка на регистрацию -> регистрация"""
-        if not FDM.is_any_registrated(self.user_num):
+        if not FDM.isRegistrated():
             self.answer(response='Привет, давай познакомимся!', continue_target='service')
             self.answer(response='Как тебя зовут?', continue_target='service')
             try_name = self.askWhileFalse(type_='str', text_to_reanswer='Не понимаю! Как тебя зовут?',
