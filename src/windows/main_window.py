@@ -95,7 +95,7 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         time.sleep(0.3)
 
     def show_user_info_window(self):
-        self.user_info_window.send_user_info(self.assistant)
+        self.user_info_window.send_user_info(self.assistant.user_num)
         self.user_info_window.show()
 
     def show_reg_window(self):
