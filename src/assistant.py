@@ -12,6 +12,7 @@ import src.file_data_manager as FDM
 import pyaudio
 from playsound import playsound     # для воспроизведения звука
 from src.observer import Subject        # импорт наблюдаемого класса
+import webbrowser
 
 
 class Assistant(Subject, FDM.DataMixin):
@@ -27,39 +28,24 @@ class Assistant(Subject, FDM.DataMixin):
         'data': FDM.config_data,
         'threadAwait_flag': False,
         "ERRORLIMIT": 3,
+        "modes": ('service', 'commands', 'websearch', 'science')
     }
 
-    def __init__(self, mode="commands"):    # элементарный инициализатор класса
+    def __init__(self):    # элементарный инициализатор класса
         self.__dict__ = self.MONOCONDITIONAL_DATA
         super().__init__()
         self.phrases = []
         self.source = sr.Microphone(device_index=1)
-        self.mode = mode
-        self.user_num: int
+        self.user_num: int = 0
 
-    def execute(self):
+    def execute(self, mode="commands"):
         """Запуск помощника"""
         self.reanswer_phrases = 0
-        if not FDM.is_any_registrated():
-            self.mode = "service"
-            self.name, self.age, self.keyword = self.register()
-        else:
-            self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
-        self.mode = "commands"
+        self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
+        self.mode = mode
         self.answer(f"Привет, {self.name}", continue_target='commands')
 
-    def askWhileFalse(self, text_to_reanswer: str, text_to_answer_finally: str, type_: str):
-        """Функция для переспрашивания, пока не истинно условие"""
-        try:
-            try_phrase = self.listen_service(phrase_to_reanswer=text_to_reanswer)
-            if validDate(type_, try_phrase):
-                self.answer(continue_target='service', response=text_to_answer_finally)
-                return try_phrase
-            return self.askWhileFalse(type_, text_to_reanswer, text_to_answer_finally)
-        except RecursionError:
-            return "Ошибка регистрации"
-
-    def speechExceptionCommands(func):
+    def speechExceptionAgain(func):
         """Декоратор прослушивания команд"""
         def wrapper(self, *args, **kwargs):
             try:
@@ -86,7 +72,7 @@ class Assistant(Subject, FDM.DataMixin):
                                 continue_target="commands")
         return wrapper
 
-    def speechExceptionService(func):
+    def speechExceptionOnce(func):
         """Декоратор прослушивания сервисных фраз"""
         def wrapper(self, *args, **kwargs):
             try:
@@ -103,42 +89,26 @@ class Assistant(Subject, FDM.DataMixin):
                             continue_target="service")
         return wrapper
 
-    def register(self):
-        """Проверка на регистрацию -> регистрация"""
-        if not FDM.isRegistrated():
-            self.answer(response='Привет, давай познакомимся!', continue_target='service')
-            self.answer(response='Как тебя зовут?', continue_target='service')
-            try_name = self.askWhileFalse(type_='str', text_to_reanswer='Не понимаю! Как тебя зовут?',
-                                          text_to_answer_finally='Отлично! Сколько тебе лет?')
-            print('age')
-            try_age = self.askWhileFalse(type_='int', text_to_reanswer='Не понимаю! Сколько тебе лет?',
-                                          text_to_answer_finally='Отлично! Придумай кодовое слово?')
-            print('password')
-            try_password = self.askWhileFalse(type_='str', text_to_reanswer='Не понимаю! Придумай кодовое слово?',
-                                          text_to_answer_finally='Отлично! Регистрация закончена!')
-
-            return FDM.register(try_name, try_age, try_password)
-
-    @speechExceptionCommands
-    def listen_commands(self):   # метод прослушивания команд
+    @speechExceptionAgain
+    def listen_again(self):   # метод прослушивания команд
         # listening
         with self.source as source:
             self.recognizer.adjust_for_ambient_noise(source)
-            audio = self.recognizer.listen(source=source, timeout=4)
+            audio = self.recognizer.listen(source=source, timeout=5)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
 
         # setting user phrase
         self.phrases.append(("Me: ", text))
         self.set_data(self.phrases)
         # matching with commands data
-        return self.matchText(text)
+        return self.match_command(text)
 
-    @speechExceptionService
-    def listen_service(self, phrase_to_reanswer):
+    @speechExceptionOnce
+    def listen_once(self, phrase_to_reanswer):
         # listening
         with self.source as source:
             self.recognizer.adjust_for_ambient_noise(source)
-            audio = self.recognizer.listen(source=source, timeout=4)
+            audio = self.recognizer.listen(source=source, timeout=5)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
 
         # setting user phrase
@@ -161,14 +131,28 @@ class Assistant(Subject, FDM.DataMixin):
                 return self.answer(response, continue_=continue_, continue_target='commands')     # вызов метода ответа с флагом продолжения
         return self.answer("Я вас не понимаю", continue_target='commands')
 
-    def answer_text(self, response,  continue_target='commands', continue_=True,):
-        # print(response.title())
-        if continue_:   # если любая команда кроме goodbye
-            if continue_target == 'commands':  # если слушаем команды
-                self.listen_commands()
-            else: pass   # если слушаем служебные команды
-        self.phrases.append(("Assistant: ", response))
-        return self.set_data(self.phrases)
+    def websearch(self, text):
+        """Режим web-поиска"""
+        query = text
+        webbrowser.open('https://www.google.ru/search?q=' + text)
+
+    def match_command(self, text):
+        match self.mode:
+            case "commands":
+                self.matchText(text)
+            case "websearch":
+                self.websearch(text)
+
+    def match_mode(self):
+        if not hasattr(self, 'mode'):
+            raise ValueError('Не определен режим работы.')
+        if self.mode in self.modes:
+            raise ValueError('Некорректный режим работы.')
+        match self.mode:
+            case "commands":
+                self.listen_again()
+            case _:
+                self.listen_once()
 
     @FDM.safe_delete_response
     def answer(self, response, continue_target='commands', continue_=True,):
@@ -184,26 +168,6 @@ class Assistant(Subject, FDM.DataMixin):
         # решение о продолжении прослушивания команд
         if continue_:
             if continue_target == 'commands':
-                self.listen_commands()
+                self.listen_again()
             elif continue_target == 'service':
-                return
-
-
-def validDate(type_: str, phrase, maxQuantityWords: int = 3, maxLength: int = 40):
-    """Проверка слов"""
-    if phrase is not None:
-        if type_ == 'int':
-            return validAge(phrase)
-        elif type_ == 'str':
-            phrase_divided = phrase.split()
-            if len(phrase) <= maxLength and len(phrase_divided) <= maxQuantityWords:
-                return True
-    return False
-
-
-def validAge(phrase) -> bool:
-    """Проверка возраста"""
-    if phrase.isdigit():
-        if 9 <= int(phrase) <= 100:
-            return True
-    return False
+                self.listen_again()

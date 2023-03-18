@@ -4,11 +4,14 @@ import json
 from bs4 import BeautifulSoup as bs
 import datetime
 
+# urls
+SEARCH_URL = 'https://www.google.ru/search?q='
 
 # парсинг фильмов
 date = datetime.datetime.today()
 year = date.strftime("%Y")
 month = date.strftime("%B").upper()
+
 
 def parse_films(url='https://kinopoiskapiunofficial.tech/api/v2.2/films/premieres'):
     data = {"year": year, "month": month}   # дынные запроса
@@ -48,7 +51,6 @@ def parse_games(url='https://store.steampowered.com/?l=russian') -> str:
         ))
         answer = f"""Советую поиграть в {random.choice(games)},
             она как раз в жанре {genres_list[genre_number - 1]}"""
-        return answer
-
-
-
+    else:
+        answer = "Ошибка интернет запроса"
+    return answer

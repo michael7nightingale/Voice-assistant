@@ -24,7 +24,6 @@ commands_random = tuple(i for i in config_data['commands']
                         if config_data['commands'][i]['response_type'] == 'random')
 functions = (parser.parse_films, parser.parse_games)
 commands_functions_dict = dict(zip(commands_functions, functions))
-amount_of_users = 0
 
 
 def is_any_registrated() -> bool:
@@ -80,4 +79,5 @@ def delete_response():
     if os.path.exists(data.DATA_DIR + data.RESPONSE_FILE_NAME):
         os.remove(data.DATA_DIR + data.RESPONSE_FILE_NAME)
 
+amount_of_users = len(get_users_info())
 

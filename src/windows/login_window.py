@@ -18,3 +18,5 @@ class LoginWindow(QMainWindow):
         user_num = int(self.ui.comboBox.currentText().split(" - ")[0].strip())
         self.parent.login(user_num)
         self.close()
+
+

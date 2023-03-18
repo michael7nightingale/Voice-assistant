@@ -6,7 +6,6 @@ from src.windows import (reg_window,
                         login_window,
                         user_info_window)
 from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
 import src.file_data_manager as FDM
 from src.observer import Observer
 from PyQt6.QtCore import *
@@ -28,6 +27,8 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.assist_condition = False
         self.assistant = Assistant()
         self.assistant.subscribe(self)
+        self.assistant_mode = "commands"    # изначально
+        self.ui.statusBar.showMessage("Режим: commands")
         # Потоки
         self.assistThread_instance = AssistantThread(self)
         self.popupThread_instance = PopupThread(self)
@@ -58,6 +59,19 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.ui.change_account.clicked.connect(self.show_login_window)
         self.ui.button_clear_messages.clicked.connect(self.clear_messages)
         self.ui.button_commands.clicked.connect(self.show_reg_window)
+        # modes change
+        self.ui.button_search.clicked.connect(self.change_mode)
+        self.ui.button_commands.clicked.connect(self.change_mode)
+        self.ui.button_mathmode.clicked.connect(self.change_mode)
+        self.ui.button_ask.clicked.connect(self.change_mode)
+        self.ui.button_news.clicked.connect(self.change_mode)
+        # modes info
+
+    def change_mode(self):
+        mode = self.sender().objectName()
+        self.assistant_mode = mode
+        self.ui.statusBar.showMessage("Режим: {}".format(mode))
+        self.assistThread_instance.terminate()
 
     def clear_messages(self):
         """Убрать все рамки сообщений"""
@@ -77,7 +91,11 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         """Запуск и выключение помощника"""
         self.assist_condition = not self.assist_condition
         if self.assist_condition:
-            self.assistThread_instance.start()
+            print(self.assistant.user_num)
+            if self.assistant.user_num:
+                self.assistThread_instance.start()
+            else:
+                self.show_login_window()
         else:
             self.assistant.source.stream = None
             if os.path.exists("response.mp3"):
@@ -104,6 +122,7 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
 
     def new_user(self, name, age, keyword):
         FDM.save_information(name, age, keyword)
+        print(FDM.amount_of_users, FDM.get_user_info(FDM.amount_of_users))
         self.login(FDM.amount_of_users)
 
     def show_login_window(self):
@@ -127,7 +146,7 @@ class AssistantThread(QThread):
     def run(self):
         """Переопределение абстрактного метода run"""
         if self.application.assist_condition:
-            self.application.assistant.execute()
+            self.application.assistant.execute(mode=self.application.assistant_mode)
 
 
 class PopupThread(QThread):
