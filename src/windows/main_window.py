@@ -11,7 +11,6 @@ from src.observer import Observer
 from PyQt6.QtCore import *
 
 
-
 class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
     """Класс приложения. Отвечает за логику отображения окна, изменения состояния
     виджетов, за создание и выключение потоков и запуск голосового помощника"""
@@ -50,6 +49,13 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         else:
             self.show_reg_window()
 
+    def status_bar_info(func):
+        def decorator(self):
+            if self.sender() is not None:
+                self.ui.statusBar.showMessage("Режим: {}".format(self.sender().objectName()))
+            return func(self)
+        return decorator
+
     def _button_checker(self):
         """Контроль кнопок"""
         self.ui.button_open_sidebar.clicked.connect(self.changeSidebarCondition)
@@ -58,19 +64,19 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.ui.my_account.clicked.connect(self.show_user_info_window)
         self.ui.change_account.clicked.connect(self.show_login_window)
         self.ui.button_clear_messages.clicked.connect(self.clear_messages)
-        self.ui.button_commands.clicked.connect(self.show_reg_window)
+        self.ui.button_createaccount.clicked.connect(self.show_reg_window)
         # modes change
         self.ui.button_search.clicked.connect(self.change_mode)
-        self.ui.button_commands.clicked.connect(self.change_mode)
+        # self.ui.button_commands.clicked.connect(self.change_mode)
         self.ui.button_mathmode.clicked.connect(self.change_mode)
         self.ui.button_ask.clicked.connect(self.change_mode)
         self.ui.button_news.clicked.connect(self.change_mode)
         # modes info
 
+    @status_bar_info
     def change_mode(self):
         mode = self.sender().objectName()
         self.assistant_mode = mode
-        self.ui.statusBar.showMessage("Режим: {}".format(mode))
         self.assistThread_instance.terminate()
 
     def clear_messages(self):
@@ -112,10 +118,12 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
             self.ui.__dict__[f"fromwho{idx + 1}"].setText(dataText[0])
         time.sleep(0.3)
 
+    @status_bar_info
     def show_user_info_window(self):
         self.user_info_window.send_user_info(self.assistant.user_num)
         self.user_info_window.show()
 
+    @status_bar_info
     def show_reg_window(self):
         """Открытие окна регистрации"""
         self.reg_window.show()
@@ -125,6 +133,7 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         print(FDM.amount_of_users, FDM.get_user_info(FDM.amount_of_users))
         self.login(FDM.amount_of_users)
 
+    @status_bar_info
     def show_login_window(self):
         """Открытие окна входа"""
         self.login_window.show()

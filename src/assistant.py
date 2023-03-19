@@ -3,6 +3,7 @@
 Выступает в роли независимого-класса.
 Реализован паттерн Моносостояние
 """
+
 import speech_recognition
 import speech_recognition as sr
 import os
