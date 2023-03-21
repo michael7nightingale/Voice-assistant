@@ -14,6 +14,7 @@ import pyaudio
 from playsound import playsound     # для воспроизведения звука
 from src.observer import Subject        # импорт наблюдаемого класса
 import webbrowser
+import mathmode
 
 
 class Assistant(Subject, FDM.DataMixin):
@@ -29,7 +30,7 @@ class Assistant(Subject, FDM.DataMixin):
         'data': FDM.config_data,
         'threadAwait_flag': False,
         "ERRORLIMIT": 3,
-        "modes": ('service', 'commands', 'websearch', 'science')
+        "modes": ('service', 'commands', 'websearch', 'mathmode')
     }
 
     def __init__(self):    # элементарный инициализатор класса
@@ -44,7 +45,7 @@ class Assistant(Subject, FDM.DataMixin):
         self.reanswer_phrases = 0
         self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
         self.mode = mode
-        self.answer(f"Привет, {self.name}", continue_target='commands')
+        self.answer(f"Привет, {self.name}. Режим работы: {self.mode}", continue_target='commands')
 
     def speechExceptionAgain(func):
         """Декоратор прослушивания команд"""
@@ -102,7 +103,7 @@ class Assistant(Subject, FDM.DataMixin):
         self.phrases.append(("Me: ", text))
         self.set_data(self.phrases)
         # matching with commands data
-        return self.match_command(text)
+        return self.match_mode(text)
 
     @speechExceptionOnce
     def listen_once(self, phrase_to_reanswer):
@@ -137,23 +138,32 @@ class Assistant(Subject, FDM.DataMixin):
         query = text
         webbrowser.open('https://www.google.ru/search?q=' + text)
 
-    def match_command(self, text):
-        match self.mode:
-            case "commands":
-                self.matchText(text)
-            case "websearch":
-                self.websearch(text)
+    def mathmode(self, text):
+        """Математический режим. На данный момент поддерживает элементраные
+        беспрефиксные выражения (два в степени шесть, миллион тысяча три минус ноль)"""
+        try:
+            response = str(mathmode.phrase_to_expression(text))
+        except:
+            response = 'Извините, на данный момент не умею такое считать. Подождите, пока Михаил Николаевич сделает' \
+                      'для меня обновление...'
+        return self.answer(response=response)
 
-    def match_mode(self):
-        if not hasattr(self, 'mode'):
-            raise ValueError('Не определен режим работы.')
-        if self.mode in self.modes:
-            raise ValueError('Некорректный режим работы.')
+    def match_mode(self, text):
+        """Функция валидации и мэтчинга режимов работы помощника."""
+        # если режим не инициализирован, либо не находит места в self.modes
+        if not hasattr(self, "mode"):
+            raise ValueError("Не установлен режим работы ассистента")
+        if self.mode not in self.modes:
+            raise ValueError("Несуществующий режим работы ассистента")
+        # иначе если режим корректен
         match self.mode:
             case "commands":
-                self.listen_again()
-            case _:
-                self.listen_once()
+                return self.matchText(text)
+            case "websearch":
+                return self.websearch(text)
+            case "mathmode":
+                return self.mathmode(text)
+
 
     @FDM.safe_delete_response
     def answer(self, response, continue_target='commands', continue_=True,):

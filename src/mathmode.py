@@ -1,28 +1,74 @@
 import numpy as np
 
 
-words = {"ноль": "0", "од": 1, "дв": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7, "восемь": 8, "девять": 9,
-         "десять": "10", "одиннадцать": 20, "двенадцать": 30, "тринадцать": 40, "четырнадцать": 50, "пятнадцать": 60, "шестнадцать": 70,
-         "семнадцать": 40, "четырнадцать": 50, "пятнадцать": 60, "шестнадцать": 70,
-         "двадцать": 20, "тридцать": 30, "срорк": 40, "пятьдесят": 50, "шестьдесят": 60, "семьдесят": 70,
-         "восемьдесят": 80, "девяносто": 90, "сто": 100,
-         "двести": "10", "триста": 20, "четыреста": 30, "пятьсот": 40, "шестьсот": 50, "семьсот": 60, "восемьсот": 70,
-         "девятьсот": 900, "тысяч": 100}
+numbers = ("ноль", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять")
 
+tens_numbers = ("одиннадцать", "двенадцать", "тринадцать", "четырнадцать", "пятнадцать", "шестнадцать",
+                "семнадцать", "восемнадцать", "девятнадцать")
 
-roots = {"ноль": "0", "од": 1, "дв": 2, "три": 3, "четыр": 4, "пят": 5, "шест": 6, "сем": 7, "восем": 8, "девят": 9,
-         "надцать": 10, "дцать": 100, "тысяч": 1000}
+tens = ("десять", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто")
 
+hundreds = ("сто",  "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот")
 
-prefix_for_operators = {}
+degrees = ("тысяча", "миллион")
 
 operators = {"умножить": "*", "степени": "**", "разделить": "/", "синус": "sin", "косинус": "cos",
              "плюс": "+", "минус": "-"}
 
 
-def text_to_integer(text):
-    for i, word in enumerate(text):
-        if i not in operators:
-            ...
 
+def text_to_integer(text: str) -> str:
+    integer = 0
+    last_more_int = 10**10
+    saved_prefix = 1
+    for i, word in enumerate(text.split()):
+        # сразу проверка если есть префиксное число
+
+
+
+        if word in numbers:
+            to_add = numbers.index(word)
+        elif word in tens_numbers:
+            to_add = tens_numbers.index(word) + 11
+        elif word in tens:
+            to_add = (tens.index(word) + 1) * 10
+        elif word in hundreds:
+            to_add = (hundreds.index(word) + 1) * 100
+        elif word in degrees:
+            to_add = 10**((degrees.index(word) + 1)*3)
+        else:
+            return "No matches found"
+        if last_more_int > to_add:
+            last_more_int = to_add
+            integer += to_add
+
+    return str(integer)
+
+
+print(text_to_integer(""))
+
+
+def phrase_to_expression(text: str) -> int:
+    result = ''
+    words = (i for i in text.split() if i not in ('на', 'в', ...))
+    first_add = list()
+    for i in words:
+        if i in operators.values():
+            result += str(i)
+        elif i.isdigit():
+            result += str(i)
+        elif i in operators:
+            if first_add:
+                result += text_to_integer(" ".join(first_add))
+            first_add.clear()
+            result += operators[i]
+        else:
+            first_add.append(i)
+    if first_add:
+        result += text_to_integer(" ".join(first_add))
+
+    return eval(result)
+
+
+# print(phrase_to_expression("два разделить на пять"))
 
