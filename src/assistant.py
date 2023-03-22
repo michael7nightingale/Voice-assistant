@@ -28,10 +28,8 @@ class Assistant(Subject, FDM.DataMixin):
     # Моносостояние
     MONOCONDITIONAL_DATA = {
         'recognizer': sr.Recognizer(),
-        'data': FDM.config_data,
         'threadAwait_flag': False,
         "ERRORLIMIT": 3,
-        "modes": ('service', 'commands', 'websearch', 'mathmode')
     }
 
     def __init__(self):    # элементарный инициализатор класса
@@ -40,6 +38,9 @@ class Assistant(Subject, FDM.DataMixin):
         self.phrases = []
         self.source = sr.Microphone(device_index=1)
         self.user_num: int = 0
+        self.commands_data = FDM.config_data['commands']
+        self.modes_list_data = FDM.config_data['modes']['list_modes']
+        self.modes_triggers_data = FDM.config_data['modes']['triggers']
 
     def execute(self, mode="commands"):
         """Запуск помощника"""
@@ -63,7 +64,7 @@ class Assistant(Subject, FDM.DataMixin):
                     # self.send_error()
                     return
                 else:
-                    self.answer(self.answer(random.choice(self.data['commands']["misunderstand"]['response']),
+                    self.answer(self.answer(random.choice(self.commands_data["misunderstand"]['response']),
                                             continue_target="commands"))
             except speech_recognition.WaitTimeoutError:
                 print('WaitTimeoutError')
@@ -73,7 +74,7 @@ class Assistant(Subject, FDM.DataMixin):
                     # self.send_error()
                     return
                 else:
-                    self.answer(random.choice(self.data['commands']['silence']['response']),
+                    self.answer(random.choice(self.commands_data['silence']['response']),
                                 continue_target="commands")
         return wrapper
 
@@ -106,7 +107,7 @@ class Assistant(Subject, FDM.DataMixin):
         self.phrases.append(("Me: ", text))
         self.set_data(self.phrases)
         # matching with commands data
-        return self.match_mode(text)
+        return self.recognize_mode(text)
 
     @speechExceptionOnce
     def listen_once(self, phrase_to_reanswer):
@@ -125,13 +126,13 @@ class Assistant(Subject, FDM.DataMixin):
     def matchText(self, phrase: str):   # распознает команды
         # проходимся по каждой команде из бд
         print('распознование')
-        for command in self.data['commands']:
+        for command in self.commands_data:
             # проверка на наличие слова-триггера в списке триггеров команды (триггер = спусковой крючок)
-            if phrase.lower().strip() in self.data['commands'][command]["trigger"]:
+            if phrase.lower().strip() in self.commands_data[command]["trigger"]:
                 if command in FDM.commands_functions_dict:
                     response = FDM.commands_functions_dict[command]()
                 else:
-                    response = random.choice(self.data['commands'][command]['response'])
+                    response = random.choice(self.commands_data[command]['response'])
                 continue_ = False if command == 'goodbye' else True
                 return self.answer(response, continue_=continue_, continue_target='commands')     # вызов метода ответа с флагом продолжения
         return self.answer("Я вас не понимаю", continue_target='commands')
@@ -153,12 +154,25 @@ class Assistant(Subject, FDM.DataMixin):
                       'для меня обновление...'
         return self.answer(response=response)
 
+    def recognize_mode(self, text: str):
+        words = text.split()
+        for i in self.modes_triggers_data:
+            if words[0].lower() in self.modes_triggers_data[i]:
+                self.mode = i
+                return self.match_mode(" ".join(words[1:]).lower())
+            elif " ".join(words[:2]).lower() in self.modes_triggers_data[i]:
+                return self.match_mode(" ".join(words[2:]).lower())
+
+        self.mode = "commands"
+        return self.match_mode(text)
+
     def match_mode(self, text):
         """Функция валидации и мэтчинга режимов работы помощника."""
         # если режим не инициализирован, либо не находит места в self.modes
+        print(text, self.mode)
         if not hasattr(self, "mode"):
             raise ValueError("Не установлен режим работы ассистента")
-        if self.mode not in self.modes:
+        if self.mode not in self.modes_list_data:
             raise ValueError("Несуществующий режим работы ассистента")
         # иначе если режим корректен
         match self.mode:

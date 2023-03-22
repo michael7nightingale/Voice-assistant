@@ -29,6 +29,14 @@
                 {"trigger": ["игра", "игры", "посоветуй игру", "посоветуй игры"],
                  "response" : "parse_games",
                 "response_type": "function"}
+        },
+    "modes": {
+        "list_modes": ["commands", "service", "news", "mathmode", "websearch"],
+        "triggers": {
+            "service": ["настрой"],
+            "mathmode": ["посчитай", "сколько", "сколько будет"],
+            "websearch": ["открой", "найди", "поиск", "интернет"]
         }
+    }
 }
 
