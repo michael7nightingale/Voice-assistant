@@ -54,3 +54,10 @@ def parse_games(url='https://store.steampowered.com/?l=russian') -> str:
     else:
         answer = "Ошибка интернет запроса"
     return answer
+
+
+def get_request_html(url='https://zetcode.com/pyqt/qwebengineview/'):
+    r = requests.get(url)
+    return r.text
+
+# get_request_html()

@@ -44,6 +44,10 @@ class Subject(object):
         for observer in self._observers:
             observer.update(data)
 
+    def show_browser_window(self, html):
+        for observer in self._observers:
+            observer.show_browser_window(html)
+
 
 class Observer:    # базовый класс Наблюдателя
     def update(self, data_to_send):   # абстрактный метод
@@ -51,4 +55,7 @@ class Observer:    # базовый класс Наблюдателя
 
     def button_clicked(self):
         raise NotImplementedError("Метод send_error_message() не определен в классе наблюдателя")
+
+    def show_browser_window(self, html):
+        raise NotImplementedError("Метод show_browser_window() не определен в классе наблюдателя")
 

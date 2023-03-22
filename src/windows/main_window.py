@@ -4,7 +4,8 @@ from src.assistant import Assistant
 from src.UI.ui import Ui_MainWindow
 from src.windows import (reg_window,
                         login_window,
-                        user_info_window)
+                        user_info_window,
+                         browser_window)
 from PyQt6.QtWidgets import *
 import src.file_data_manager as FDM
 from src.observer import Observer
@@ -32,9 +33,11 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.assistThread_instance = AssistantThread(self)
         self.popupThread_instance = PopupThread(self)
         # Окна
-        self.reg_window = reg_window.RegWindow(self)
-        self.login_window = login_window.LoginWindow(self)
-        self.user_info_window = user_info_window.UserInfoWindow(self)
+        self.reg_window = reg_window.RegWindow(parent=self)
+        self.login_window = login_window.LoginWindow(parent=self)
+        self.user_info_window = user_info_window.UserInfoWindow(parent=self)
+        self.browser_window = browser_window.BrowserWindow(parent=self)
+
         # Log in / Log up
         self.check_registration()
         # Первоначальная очистка окон
@@ -77,7 +80,8 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
     def change_mode(self):
         mode = self.sender().objectName()
         self.assistant_mode = mode
-        self.assistThread_instance.terminate()
+        # self.assistThread_instance.terminate()
+        self.ui.button_start.click()
 
     def clear_messages(self):
         """Убрать все рамки сообщений"""
@@ -143,6 +147,14 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.assistThread_instance.terminate()
         self.assist_condition = False
         self.assistant.user_num = user_num
+
+    def show_browser_window(self, html):
+        self.browser_window.load_page(html)
+        self.browser_window.show()
+
+    def restart_assistant(self):
+        self.assistThread_instance.terminate()
+        # self.assistThread_instance.start()
 
 
 class AssistantThread(QThread):

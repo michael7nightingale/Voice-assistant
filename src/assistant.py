@@ -15,6 +15,7 @@ from playsound import playsound     # для воспроизведения зв
 from src.observer import Subject        # импорт наблюдаемого класса
 import webbrowser
 import mathmode
+import parser
 
 
 class Assistant(Subject, FDM.DataMixin):
@@ -42,10 +43,12 @@ class Assistant(Subject, FDM.DataMixin):
 
     def execute(self, mode="commands"):
         """Запуск помощника"""
+        print(mode)
         self.reanswer_phrases = 0
         self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
         self.mode = mode
-        self.answer(f"Привет, {self.name}. Режим работы: {self.mode}", continue_target='commands')
+        self.answer(f"Привет, {self.name}. Режим работы: {self.mode}", continue_=False)
+        self.listen_again()
 
     def speechExceptionAgain(func):
         """Декоратор прослушивания команд"""
@@ -98,7 +101,7 @@ class Assistant(Subject, FDM.DataMixin):
             self.recognizer.adjust_for_ambient_noise(source)
             audio = self.recognizer.listen(source=source, timeout=5)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
-
+        print(123)
         # setting user phrase
         self.phrases.append(("Me: ", text))
         self.set_data(self.phrases)
@@ -138,6 +141,8 @@ class Assistant(Subject, FDM.DataMixin):
         query = text
         webbrowser.open('https://www.google.ru/search?q=' + text)
 
+    # def show_browser_window(self, html):
+
     def mathmode(self, text):
         """Математический режим. На данный момент поддерживает элементраные
         беспрефиксные выражения (два в степени шесть, миллион тысяча три минус ноль)"""
@@ -160,10 +165,10 @@ class Assistant(Subject, FDM.DataMixin):
             case "commands":
                 return self.matchText(text)
             case "websearch":
+                # return self.show_browser_window(html=parser.get_request_html())
                 return self.websearch(text)
             case "mathmode":
                 return self.mathmode(text)
-
 
     @FDM.safe_delete_response
     def answer(self, response, continue_target='commands', continue_=True,):
@@ -182,3 +187,5 @@ class Assistant(Subject, FDM.DataMixin):
                 self.listen_again()
             elif continue_target == 'service':
                 self.listen_again()
+        else:
+            return
