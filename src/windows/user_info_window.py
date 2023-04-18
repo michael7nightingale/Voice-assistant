@@ -11,8 +11,8 @@ class UserInfoWindow(QMainWindow):
         self.ui.setupUi(self)
 
     def send_user_info(self, user_num):
-        if FDM.is_any_registrated():
-            name, age, keyword = FDM.get_user_info(user_num)
+        if self.parent._AssistantApplication__usersManager.is_any_registered():
+            name, age, keyword = self.parent._AssistantApplication__usersManager.get_user_info(user_num)
             self.info = QLabel(self.ui.frame_10)
             self.info.setText(f"{name}\n{age}\n{keyword}")
             self.ui.frame_10.setStyleSheet("background-color: rgb(255, 255, 255);\n"

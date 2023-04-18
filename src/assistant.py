@@ -14,39 +14,40 @@ import pyaudio
 from playsound import playsound     # для воспроизведения звука
 from src.observer import Subject        # импорт наблюдаемого класса
 import webbrowser
-import mathmode
-import parser
+from src import mathmode
 
 
 class Assistant(Subject, FDM.DataMixin):
     """Класс голосового помощника"""
+    __assistantManager = FDM.AssistantManager()
+    recognizer = sr.Recognizer()
+    ERRORLIMIT = 3
+
     def __new__(cls, *args, **kwargs):  # элементарный конструктор класса
         if not hasattr(cls, 'instance'):    # Синглтон
             cls.instance = super().__new__(cls)
         return cls.instance
 
-    # Моносостояние
-    MONOCONDITIONAL_DATA = {
-        'recognizer': sr.Recognizer(),
-        'threadAwait_flag': False,
-        "ERRORLIMIT": 3,
-    }
+    # # Моносостояние
+    # MONOCONDITIONAL_DATA = {
+    #     'recognizer': sr.Recognizer(),
+    #     'threadAwait_flag': False,
+    #     "ERRORLIMIT": 3,
+    # }
 
     def __init__(self):    # элементарный инициализатор класса
-        self.__dict__ = self.MONOCONDITIONAL_DATA
+        # self.__dict__ = self.MONOCONDITIONAL_DATA
         super().__init__()
         self.phrases = []
         self.source = sr.Microphone(device_index=1)
         self.user_num: int = 0
-        self.commands_data = FDM.config_data['commands']
-        self.modes_list_data = FDM.config_data['modes']['list_modes']
-        self.modes_triggers_data = FDM.config_data['modes']['triggers']
+        self.threadAwait_flag = False
 
     def execute(self, mode="commands"):
         """Запуск помощника"""
         print(mode)
         self.reanswer_phrases = 0
-        self.name, self.age, self.keyword = FDM.get_user_info(self.user_num)
+        self.name, self.age, self.keyword = self.__assistantManager.get_user_info(self.user_num)
         self.mode = mode
         self.answer(f"Привет, {self.name}. Режим работы: {self.mode}", continue_=False)
         self.listen_again()
@@ -84,13 +85,12 @@ class Assistant(Subject, FDM.DataMixin):
             try:
                 return func(self, *args, **kwargs)
             except speech_recognition.UnknownValueError:
-                print("serv", 'UnknownValueError')
-                print(self, args, kwargs)
+                # print("serv", 'UnknownValueError')
+                # print(self, args, kwargs)
                 self.answer(response=kwargs['phrase_to_reanswer'],
                             continue_target="service")
             except speech_recognition.WaitTimeoutError:
-                print("serv", 'WaitTimeoutError')
-                print(self, args, kwargs)
+                # print("serv", 'WaitTimeoutError')
                 self.answer(response=kwargs['phrase_to_reanswer'],
                             continue_target="service")
         return wrapper
@@ -102,7 +102,6 @@ class Assistant(Subject, FDM.DataMixin):
             self.recognizer.adjust_for_ambient_noise(source)
             audio = self.recognizer.listen(source=source, timeout=5)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
-        print(123)
         # setting user phrase
         self.phrases.append(("Me: ", text))
         self.set_data(self.phrases)
@@ -116,7 +115,6 @@ class Assistant(Subject, FDM.DataMixin):
             self.recognizer.adjust_for_ambient_noise(source)
             audio = self.recognizer.listen(source=source, timeout=5)
             text = self.recognizer.recognize_google(audio_data=audio, language='ru_RU')
-
         # setting user phrase
         self.phrases.append(("Me: ", text))
         self.set_data(self.phrases)
@@ -126,13 +124,13 @@ class Assistant(Subject, FDM.DataMixin):
     def matchText(self, phrase: str):   # распознает команды
         # проходимся по каждой команде из бд
         print('распознование')
-        for command in self.commands_data:
+        for command in self.__assistantManager.commands_data:
             # проверка на наличие слова-триггера в списке триггеров команды (триггер = спусковой крючок)
-            if phrase.lower().strip() in self.commands_data[command]["trigger"]:
-                if command in FDM.commands_functions_dict:
-                    response = FDM.commands_functions_dict[command]()
+            if phrase.lower().strip() in self.__assistantManager.commands_data[command]["trigger"]:
+                if command in self.__assistantManager.commands_functions_dict:
+                    response = self.__assistantManager.commands_functions_dict[command]()
                 else:
-                    response = random.choice(self.commands_data[command]['response'])
+                    response = random.choice(self.__assistantManager.commands_data[command]['response'])
                 continue_ = False if command == 'goodbye' else True
                 return self.answer(response, continue_=continue_, continue_target='commands')     # вызов метода ответа с флагом продолжения
         return self.answer("Я вас не понимаю", continue_target='commands')
@@ -156,11 +154,11 @@ class Assistant(Subject, FDM.DataMixin):
 
     def recognize_mode(self, text: str):
         words = text.split()
-        for i in self.modes_triggers_data:
-            if words[0].lower() in self.modes_triggers_data[i]:
+        for i in self.__assistantManager.modes_triggers_data:
+            if words[0].lower() in self.__assistantManager.modes_triggers_data[i]:
                 self.mode = i
                 return self.match_mode(" ".join(words[1:]).lower())
-            elif " ".join(words[:2]).lower() in self.modes_triggers_data[i]:
+            elif " ".join(words[:2]).lower() in self.__assistantManager.modes_triggers_data[i]:
                 return self.match_mode(" ".join(words[2:]).lower())
 
         self.mode = "commands"
@@ -172,7 +170,7 @@ class Assistant(Subject, FDM.DataMixin):
         print(text, self.mode)
         if not hasattr(self, "mode"):
             raise ValueError("Не установлен режим работы ассистента")
-        if self.mode not in self.modes_list_data:
+        if self.mode not in self.__assistantManager.modes_list_data:
             raise ValueError("Несуществующий режим работы ассистента")
         # иначе если режим корректен
         match self.mode:
@@ -184,7 +182,7 @@ class Assistant(Subject, FDM.DataMixin):
             case "mathmode":
                 return self.mathmode(text)
 
-    @FDM.safe_delete_response
+    @__assistantManager.safe_delete_response
     def answer(self, response, continue_target='commands', continue_=True,):
         # setting assistant phrase
         self.phrases.append(("Assistant: ", response))
@@ -193,7 +191,7 @@ class Assistant(Subject, FDM.DataMixin):
         audio_text = gTTS(text=response, lang='ru')
         audio_text.save(self.DATA_DIR + self.RESPONSE_FILE_NAME)
         playsound(self.DATA_DIR + self.RESPONSE_FILE_NAME)
-        FDM.delete_response()
+        self.__assistantManager.delete_response()
         # play()
         # решение о продолжении прослушивания команд
         if continue_:

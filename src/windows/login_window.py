@@ -9,8 +9,8 @@ class LoginWindow(QMainWindow):
         self.parent = parent
         self.ui = Ui_LoginWindow()
         self.ui.setupUi(self)
-        if FDM.is_any_registrated():
-            for i, user in enumerate(FDM.get_users_info()):
+        if parent._AssistantApplication__usersManager.is_any_registered():
+            for i, user in enumerate(parent._AssistantApplication__usersManager.get_users_info()):
                 self.ui.comboBox.addItem(f"{i + 1} - {user.split()[0]}")
         self.ui.pushButton.clicked.connect(self.login)
 

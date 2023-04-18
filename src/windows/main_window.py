@@ -12,7 +12,7 @@ from src.observer import Observer
 from PyQt6.QtCore import *
 
 
-class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
+class AssistantApplication(QMainWindow, Observer):
     """Класс приложения. Отвечает за логику отображения окна, изменения состояния
     виджетов, за создание и выключение потоков и запуск голосового помощника"""
     MAX_PHRASES_QUANTITY = 4    # максимальное количество отображаемых фраз
@@ -32,6 +32,7 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         # Потоки
         self.assistThread_instance = AssistantThread(self)
         self.popupThread_instance = PopupThread(self)
+        self.__usersManager = FDM.UsersManager()
         # Окна
         self.reg_window = reg_window.RegWindow(parent=self)
         self.login_window = login_window.LoginWindow(parent=self)
@@ -44,10 +45,10 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.clear_messages()
         self._button_checker()
 
-    def check_registration(self):
+    def check_registration(self) -> None:
         """Если есть зарегистрированные пользователи, открываем окно входа,
         если нет, то окно регистрации"""
-        if FDM.is_any_registrated():
+        if self.__usersManager.is_any_registered():
             self.show_login_window()
         else:
             self.show_reg_window()
@@ -133,9 +134,9 @@ class AssistantApplication(QMainWindow, Observer, FDM.DataMixin):
         self.reg_window.show()
 
     def new_user(self, name, age, keyword):
-        FDM.save_information(name, age, keyword)
-        print(FDM.amount_of_users, FDM.get_user_info(FDM.amount_of_users))
-        self.login(FDM.amount_of_users)
+        self.__usersManager.save_information(name, age, keyword)
+        # print(self.__usersManager._amount_of_users, self.__usersManager.get_user_info(self.__usersManager._amount_of_users))
+        self.login(self.__usersManager._amount_of_users)
 
     @status_bar_info
     def show_login_window(self):
